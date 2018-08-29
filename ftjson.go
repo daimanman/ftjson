@@ -18,8 +18,17 @@ var (
 	K = flag.Int("K", 0, "K=0")
 	V = flag.Int("V", 0, "V=0")
 	F = flag.String("F", " ", "空格分割符号")
-	P = flag.Bool("P", true, "格式化")
+	P = flag.Bool("P", false, "格式化")
+	h = flag.Bool("h", false, "帮助信息")
 )
+
+var useage = `
+    -K key 列
+    -V value 列
+    -F 列分割符号 默认 空格
+    -P pretty json 输出 默认false
+
+`
 
 var maxCol int
 var jsonMap map[string]string
@@ -87,9 +96,18 @@ func dealFile(filepath string) {
 
 func main() {
 	flag.Parse()
+	if *h {
+		fmt.Println(useage)
+		return
+	}
+	maxCol = max(*K, *V)
+	if maxCol <= 0 {
+		fmt.Println(maxCol, "请正确指定列 K V ")
+		return
+	}
 	files := GetFiles(flag.Args())
 	jsonMap = make(map[string]string)
-	maxCol = max(*K, *V)
+
 	lenth := len(files)
 	if len(files) == 0 {
 		fmt.Printf("未找到文件,请检查参数是否在正确 \n")
