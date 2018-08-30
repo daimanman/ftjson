@@ -10,12 +10,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
 
 var (
-	K = flag.Int("K", 0, "K=0")
+	K = flag.String("K", "1,2", "K=1")
 	V = flag.Int("V", 0, "V=0")
 	F = flag.String("F", " ", "空格分割符号")
 	P = flag.Bool("P", false, "格式化")
@@ -33,12 +35,25 @@ var useage = `
 var maxCol int
 var jsonMap map[string]string
 var wg sync.WaitGroup
+var kcols []int
 
-func max(k int, v int) int {
-	if k > v {
-		return k
+func max(k []int, v int) int {
+	sort.Ints(k)
+	size := len(k)
+	index := size - 1
+	if index > 0 && k[index] > v {
+		return k[index]
 	}
 	return v
+}
+
+func initCols() {
+	kcols = make([]int, 0)
+	cols := strings.Split(*K, ",")
+	for _, c := range cols {
+		i, _ := strconv.Atoi(c)
+		kcols = append(kcols, i)
+	}
 }
 
 func GetFiles(paths []string) []string {
@@ -85,12 +100,20 @@ func dealFile(filepath string) {
 
 		strsArray := strings.Split(line, *F)
 		size := len(strsArray)
-		if size < maxCol {
+		if size < *V {
 			continue
 		}
-		key := strings.TrimSpace(strsArray[*K-1])
+
 		value := strings.TrimSpace(strsArray[*V-1])
-		jsonMap[key] = value
+		for _, kc := range kcols {
+			if kc <= size {
+				key := strings.TrimSpace(strsArray[kc-1])
+				if key != "" {
+					jsonMap[key] = value
+				}
+			}
+		}
+
 	}
 }
 
@@ -100,7 +123,8 @@ func main() {
 		fmt.Println(useage)
 		return
 	}
-	maxCol = max(*K, *V)
+	initCols()
+	maxCol = max(kcols, *V)
 	if maxCol <= 0 {
 		fmt.Println(maxCol, "请正确指定列 K V ")
 		return
