@@ -98,7 +98,9 @@ func dealFile(filepath string) {
 			break
 		}
 
+		line = strings.Replace(line, "\t", " ", -1)
 		strsArray := strings.Split(line, *F)
+		//strings.Split(line, *F)
 		size := len(strsArray)
 		if size < *V {
 			continue
